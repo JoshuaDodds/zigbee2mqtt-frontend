@@ -13,7 +13,14 @@ import { WithTranslation, withTranslation } from 'react-i18next';
 import LocalePicker from '../../i18n/LocalePicker';
 import { StartStopJoinButton } from './StartStopJoinButton';
 import { SettingsDropdown } from './SettingsDropdown';
-import { isIframe, getCurrentBackendURL, getBackendURLs, setCurrentBackendURL, getWebSocketURL, formatDisplayURL } from '../../utils';
+import {
+    isIframe,
+    getCurrentBackendURL,
+    getBackendURLs,
+    setCurrentBackendURL,
+    getWebSocketURL,
+    formatDisplayURL,
+} from '../../utils';
 import api from '../../ws-client';
 
 const urls = [
@@ -73,7 +80,7 @@ const NavBar: FunctionComponent<PropsFromStore & ThemeActions & WithTranslation<
         const newBackend = event.target.value;
         setCurrentBackendURL(newBackend);
         setCurrentBackend(newBackend);
-        const newUrl = getWebSocketURL(newBackend)
+        const newUrl = getWebSocketURL(newBackend);
         api.updateUrl(newUrl); // Update the WebSocket connection
     };
 
