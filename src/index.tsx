@@ -38,6 +38,11 @@ async function initApp() {
     if (domNode) {
         createRoot(domNode).render(<Main />);
     }
+
+    // https://vite.dev/guide/build#load-error-handling
+    window.addEventListener('vite:preloadError', () => {
+        window.location.reload();
+    });
 }
 
 initApp();
