@@ -18,7 +18,7 @@ async function initApp() {
         if (headResponse.ok) {
             const response = await fetch('backends.json');
             const data = await response.json();
-            const backendUrls = data.backends.map(backend => getWebSocketURL(backend.url, backend.secure));
+            const backendUrls = data.backends.map((backend) => getWebSocketURL(backend.url, backend.secure));
             setBackendURLs([defaultUrl, ...backendUrls]);
             setCurrentBackendURL(getCurrentBackendURL() || backendUrls[0]);
         }
@@ -32,7 +32,7 @@ async function initApp() {
     }
 
     await Promise.resolve();
-    api.connect()
+    api.connect();
 
     const domNode = document.getElementById('root');
     if (domNode) {
