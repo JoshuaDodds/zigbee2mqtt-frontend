@@ -3,10 +3,10 @@ import store, { Base64String, Extension, LogMessage, OnlineOrOffline } from './s
 import { BridgeConfig, BridgeInfo, BridgeState, BridgeDefinitions, Device, DeviceState, Group, TouchLinkDevice } from './types';
 import {
     debounceArgs,
-    isSecurePage,
     randomString,
     sanitizeGraph,
     stringifyWithPreservingUndefinedAsNull,
+    getCurrentBackendURL, getWebSocketURL
 } from './utils';
 
 import { Store } from 'react-notifications-component';
@@ -141,10 +141,22 @@ class Api {
     }
 
     connect(): void {
+        if (this.socket) {
+            this.socket.close();
+        }
         this.socket = new ReconnectingWebSocket(this.urlProvider);
         this.socket.addEventListener("message", this.onMessage);
         this.socket.addEventListener("close", this.onClose);
     }
+
+    updateUrl(newUrl: string): void {
+        this.url = newUrl;
+        if (this.socket) {
+            this.socket.close();
+        }
+        this.connect();
+    }
+
     private processDeviceStateMessage = debounceArgs((messages: Message[]): void => {
         let { deviceStates } = store.getState();
         messages.forEach(data => {
@@ -315,6 +327,6 @@ class Api {
 
     }
 }
-const apiUrl = `${window.location.host}${document.location.pathname}api`;
-const api = new Api(`${isSecurePage() ? 'wss' : 'ws'}://${apiUrl}`);
+const apiUrl = getCurrentBackendURL() || getWebSocketURL(window.location.host)
+const api = new Api(apiUrl);
 export default api;

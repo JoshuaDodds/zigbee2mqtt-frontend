@@ -8,6 +8,54 @@ import local from 'store2';
 import debounce from 'lodash/debounce';
 import { diff } from 'deep-object-diff';
 
+export const BACKEND_URLS_KEY = 'z2m-backend-urls';
+export const CURRENT_BACKEND_URL_KEY = 'z2m-current-backend-url';
+
+export const formatDisplayURL = (url) => {
+    try {
+        const urlObj = new URL(url);
+        return urlObj.hostname;  // Return just the hostname for display purposes
+    } catch (e) {
+        console.error("Failed to parse URL:", url, e);
+        return url;  // Fallback to displaying the full URL if parsing fails
+    }
+};
+
+export const getWebSocketURL = (backend, secure = false) => {
+    const protocol = isSecurePage() || secure ? 'wss' : 'ws';
+    try {
+        if (backend) {
+            if (!backend.startsWith('ws')) {
+                backend = `${protocol}://${backend}`;
+            }
+            if (!backend.endsWith('/api')) {
+                backend += '/api';
+            }
+        }
+        return backend;
+    } catch (e) {
+        return `${protocol}://${window.location.host}/api`;
+    }
+};
+
+export const getBackendURLs = (): string[] => {
+    let urls = local.get(BACKEND_URLS_KEY) || [];
+    // Ensure URLs include the protocol if not already included
+    return urls.map(url => getWebSocketURL(url));
+};
+
+export const setBackendURLs = (urls: string[]): void => {
+    local.set(BACKEND_URLS_KEY, urls);
+};
+
+export const getCurrentBackendURL = (): string => {
+    let url = local.get(CURRENT_BACKEND_URL_KEY) || '';
+    return url ? getWebSocketURL(url) : getWebSocketURL(); // Use the utility to format or return default
+};
+
+export const setCurrentBackendURL = (url: string): void => {
+    local.set(CURRENT_BACKEND_URL_KEY, getWebSocketURL(url));
+};
 
 export const genDeviceDetailsLink = (deviceIdentifier: string | number): string => (`/device/${deviceIdentifier}`);
 
@@ -113,7 +161,7 @@ export const getDeviceDisplayName = (device: Device): string => {
 
 export const randomString = (len: number): string => Math.random().toString(36).slice(2, 2 + len);
 
-export const isSecurePage = (): boolean => location.protocol === 'https:';
+export const isSecurePage = (): boolean => window.location.protocol === 'https:';
 
 
 export const scale = (inputY: number, yRange: Array<number>, xRange: Array<number>): number => {

@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useRef, useState } from 'react';
+import React, { FunctionComponent, useRef, useState, useEffect } from 'react';
 
 import { GlobalState } from '../../store';
 import actions, { ThemeActions } from '../../actions/actions';
@@ -11,9 +11,10 @@ import { BridgeApi } from '../../actions/BridgeApi';
 import { ThemeSwitcher } from '../theme-switcher';
 import { WithTranslation, withTranslation } from 'react-i18next';
 import LocalePicker from '../../i18n/LocalePicker';
-import { isIframe } from '../../utils';
 import { StartStopJoinButton } from './StartStopJoinButton';
 import { SettingsDropdown } from './SettingsDropdown';
+import { isIframe, getCurrentBackendURL, getBackendURLs, setCurrentBackendURL, getWebSocketURL, formatDisplayURL } from '../../utils';
+import api from '../../ws-client';
 
 const urls = [
     {
@@ -57,9 +58,29 @@ const NavBar: FunctionComponent<PropsFromStore & ThemeActions & WithTranslation<
     const { devices, setPermitJoin, bridgeInfo, restartBridge, setTheme, t } = props;
     const ref = useRef<HTMLDivElement>();
     const [navbarIsVisible, setNavbarIsVisible] = useState<boolean>(false);
+    const [backends, setBackends] = useState<string[]>([]);
+    const [currentBackend, setCurrentBackend] = useState<string>('');
+
+    useEffect(() => {
+        const loadedBackends = getBackendURLs();
+        setBackends(loadedBackends);
+        if (loadedBackends.length > 1 || (loadedBackends.length === 1 && loadedBackends[0])) {
+            setCurrentBackend(getCurrentBackendURL() || loadedBackends[0]);
+        }
+    }, []);
+
+    const handleSelectBackend = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const newBackend = event.target.value;
+        setCurrentBackendURL(newBackend);
+        setCurrentBackend(newBackend);
+        const newUrl = getWebSocketURL(newBackend)
+        api.updateUrl(newUrl); // Update the WebSocket connection
+    };
+
     useOnClickOutside(ref, () => {
         setNavbarIsVisible(false);
     });
+
     return (
         <nav className="navbar navbar-expand-md navbar-light">
             <div ref={ref as React.MutableRefObject<HTMLDivElement>} className="container-fluid">
@@ -102,10 +123,23 @@ const NavBar: FunctionComponent<PropsFromStore & ThemeActions & WithTranslation<
                         {t('restart')}
                     </Button>
                 ) : null}
+                {backends.length > 1 && (
+                    <div className="backend-selector">
+                        <label htmlFor="backend-select"></label>
+                        <select id="backend-select" value={currentBackend} onChange={handleSelectBackend}>
+                            {backends.map((backend, index) => (
+                                <option key={index} value={backend}>
+                                    {formatDisplayURL(backend)}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
             </div>
         </nav>
     );
 };
+
 const mappedProps = ['bridgeInfo', 'devices'];
 const ConnectedNavBar = withTranslation('navbar')(
     connect<unknown, unknown, PropsFromStore, BridgeApi>(mappedProps, actions)(NavBar),
