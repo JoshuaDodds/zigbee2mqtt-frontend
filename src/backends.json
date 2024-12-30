@@ -1,0 +1,12 @@
+{
+  "backends": [
+    {
+      "url": "zigbee2mqtt.host1.net",
+      "secure": false
+    },
+    {
+      "url": "zigbee2mqtt.host2.net",
+      "secure": true
+    }
+  ]
+}
