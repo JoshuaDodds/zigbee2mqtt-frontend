@@ -1,3 +1,12 @@
+## [0.9.4](https://github.com/nurikk/zigbee2mqtt-frontend/compare/0.9.3...0.9.4) (2024-12-30)
+
+
+### Bug Fixes
+
+* **preloader:** fix vite dynamic module loading error ([c66150a](https://github.com/nurikk/zigbee2mqtt-frontend/commit/c66150a8f4b21bfd77e08c019685ef00cc6d63b4))
+
+
+
 ## [0.9.3](https://github.com/nurikk/zigbee2mqtt-frontend/compare/0.9.2...0.9.3) (2024-12-28)
 
 
