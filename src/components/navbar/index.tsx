@@ -131,9 +131,14 @@ const NavBar: FunctionComponent<PropsFromStore & ThemeActions & WithTranslation<
                     </Button>
                 ) : null}
                 {backends.length > 1 && (
-                    <div className="backend-selector">
-                        <label htmlFor="backend-select"></label>
-                        <select id="backend-select" value={currentBackend} onChange={handleSelectBackend}>
+                    <div className="backend-selector dropdown">
+                        <label htmlFor="backend-select" className="visually-hidden"></label>
+                        <select
+                            id="backend-select"
+                            value={currentBackend}
+                            onChange={handleSelectBackend}
+                            className="form-select rounded border-secondary"
+                        >
                             {backends.map((backend, index) => (
                                 <option key={index} value={backend}>
                                     {formatDisplayURL(backend)}
@@ -149,6 +154,7 @@ const NavBar: FunctionComponent<PropsFromStore & ThemeActions & WithTranslation<
 
 const mappedProps = ['bridgeInfo', 'devices'];
 const ConnectedNavBar = withTranslation('navbar')(
-    connect<unknown, unknown, PropsFromStore, BridgeApi>(mappedProps, actions)(NavBar),
+    connect
+    < unknown, unknown, PropsFromStore, BridgeApi > (mappedProps, actions)(NavBar),
 );
 export default ConnectedNavBar;
