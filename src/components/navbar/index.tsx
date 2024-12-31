@@ -131,9 +131,14 @@ const NavBar: FunctionComponent<PropsFromStore & ThemeActions & WithTranslation<
                     </Button>
                 ) : null}
                 {backends.length > 1 && (
-                    <div className="backend-selector">
-                        <label htmlFor="backend-select"></label>
-                        <select id="backend-select" value={currentBackend} onChange={handleSelectBackend}>
+                    <div className="backend-selector dropdown">
+                        <label htmlFor="backend-select" class="visually-hidden"></label>
+                        <select
+                            id="backend-select"
+                            value={currentBackend}
+                            onChange={handleSelectBackend}
+                            class="form-select rounded border-secondary"
+                        >
                             {backends.map((backend, index) => (
                                 <option key={index} value={backend}>
                                     {formatDisplayURL(backend)}
