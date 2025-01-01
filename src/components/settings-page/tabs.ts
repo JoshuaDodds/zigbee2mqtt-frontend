@@ -1,4 +1,3 @@
-
 export const tabs = [
     {
         translationKey: 'settings',
@@ -7,6 +6,10 @@ export const tabs = [
     {
         translationKey: 'tools',
         url: `/settings/tools`,
+    },
+    {
+        translationKey: 'ui-options',
+        url: `/settings/ui-options`,
     },
     {
         translationKey: 'about',

@@ -15,7 +15,16 @@ import { WithTranslation, withTranslation } from 'react-i18next';
 import { DescriptionField, TitleField } from '../../i18n/rjsf-translation-fields';
 import { Stats } from './stats';
 import frontendPackageJson from './../../../package.json';
-import { computeSettingsDiff, formatDate } from '../../utils';
+import {
+    computeSettingsDiff,
+    formatDate,
+    getBackendURLs,
+    setBackendURLs,
+    getCurrentBackendURL,
+    setCurrentBackendURL,
+    formatDisplayURL,
+    getWebSocketURL,
+} from '../../utils';
 import { saveAs } from 'file-saver';
 import Spinner from '../spinner';
 import { TranslatedImageLocaliser } from './image-localiser';
@@ -24,7 +33,7 @@ import { tabs } from './tabs';
 
 const Form = withTheme(Bootstrap5Theme);
 
-type SettingsTab = 'settings' | 'bridge' | 'about' | 'tools' | 'donate' | 'translate';
+type SettingsTab = 'settings' | 'bridge' | 'about' | 'tools' | 'donate' | 'translate' | 'ui-options';
 
 type SettingsKeys = string;
 type UrlParams = {
@@ -92,12 +101,19 @@ type PropsFromStore = Pick<
 >;
 class SettingsPage extends Component<
     PropsFromStore & SettingsPageProps & DeviceApi & BridgeApi & UtilsApi & WithTranslation<'setting'>,
-    SettingsPageState
+    SettingsPageState & {
+        backends: string[];
+        newBackend: string;
+        newSecure: boolean;
+    }
 > {
     state = {
         keyName: ROOT_KEY_NAME,
+        backends: getBackendURLs(),
+        newBackend: '',
+        newSecure: false,
     };
-    settingsFormData: {[s: string]: Record<string, unknown>} = {};
+    settingsFormData: { [s: string]: Record<string, unknown> } = {};
     renderCategoriesTabs(): JSX.Element {
         const { t } = this.props;
         return (
@@ -138,9 +154,165 @@ class SettingsPage extends Component<
                 return this.renderDonate();
             case 'translate':
                 return this.renderTranslate();
+            case 'ui-options':
+                return this.renderUiOptions();
             default:
                 return <Redirect to={`/settings/settings`} />;
         }
+    }
+    handleAddBackend = () => {
+        const { newBackend, newSecure, backends } = this.state;
+        if (!newBackend) return;
+        const updatedBackends = [...backends, getWebSocketURL(newBackend, newSecure)];
+        setBackendURLs(updatedBackends);
+        this.setState({ backends: updatedBackends, newBackend: '', newSecure: false });
+        window.location.reload();
+    };
+
+    handleRemoveBackend = (index: number) => {
+        const { backends } = this.state;
+        const updatedBackends = backends.filter((_, i) => i !== index);
+        setBackendURLs(updatedBackends);
+        this.setState({ backends: updatedBackends });
+        window.location.reload();
+    };
+
+    handleUpdateBackend = (index: number, url: string, secure: boolean) => {
+        const { backends } = this.state;
+        const updatedBackend = getWebSocketURL(url, secure);
+        const updatedBackends = backends.map((backend, i) => (i === index ? updatedBackend : backend));
+        setBackendURLs(updatedBackends);
+        this.setState({ backends: updatedBackends });
+        window.location.reload();
+    };
+
+    renderUiOptions(): JSX.Element {
+        const { t } = this.props;
+        const { backends, newBackend, newSecure } = this.state;
+
+        return (
+            <div className="p-3">
+                <p>
+                    <h4>{t('settings:additional_backend_header')} </h4>
+                    <hr />
+                    <p>
+                        {t('settings:additional_backend_title')} <br />
+                        {t('settings:additional_backend_description')}{' '}
+                    </p>
+                    <p>{t('settings:additional_backend_secure_description')} </p>
+                </p>
+                <div className="mb-3">
+                    {backends.length === 0 ? (
+                        <div className="d-flex align-items-center mb-2">
+                            <input
+                                type="text"
+                                className="form-control me-2"
+                                placeholder={t('settings:additional_backend_host_tip')}
+                                value={newBackend}
+                                onChange={(e) => this.setState({ newBackend: e.target.value })}
+                            />
+                            <div className="form-check me-2">
+                                <input
+                                    className="form-check-input"
+                                    type="checkbox"
+                                    id="secureCheckbox"
+                                    checked={newSecure}
+                                    onChange={() => this.setState({ newSecure: !newSecure })}
+                                />
+                                <label className="form-check-label" htmlFor="secureCheckbox">
+                                    {t('settings:additional_backend_secure_label')}
+                                </label>
+                            </div>
+                            <button className="btn btn-primary" onClick={this.handleAddBackend}>
+                                +
+                            </button>
+                        </div>
+                    ) : (
+                        <>
+                            {backends.map((backend, index) => {
+                                const parsedBackend = new URL(backend);
+                                const isSecure = parsedBackend.protocol === 'wss:';
+                                const hostname = parsedBackend.hostname;
+
+                                if (index === 0) {
+                                    return (
+                                        <div key={index} className="d-flex align-items-center mb-2">
+                                            <input
+                                                type="text"
+                                                className="form-control me-5"
+                                                value={hostname}
+                                                disabled
+                                            />
+                                            <span className="badge bg-secondary me-2">
+                                                This host is derived and cannot be edited
+                                            </span>
+                                        </div>
+                                    );
+                                }
+
+                                return (
+                                    <div key={index} className="d-flex align-items-center mb-2">
+                                        <input
+                                            type="text"
+                                            className="form-control me-2"
+                                            defaultValue={hostname}
+                                            onBlur={(e) => this.handleUpdateBackend(index, e.target.value, isSecure)}
+                                        />
+                                        <div className="form-check me-2">
+                                            <input
+                                                className="form-check-input"
+                                                type="checkbox"
+                                                id={`secureCheckbox-${index}`}
+                                                checked={isSecure}
+                                                onChange={(e) =>
+                                                    this.handleUpdateBackend(index, hostname, e.target.checked)
+                                                }
+                                            />
+                                            <label
+                                                className="form-check-label me-7"
+                                                htmlFor={`secureCheckbox-${index}`}
+                                            >
+                                                {t('settings:additional_backend_secure_label')}
+                                            </label>
+                                        </div>
+                                        <button
+                                            className="btn btn-danger w-25"
+                                            onClick={() => this.handleRemoveBackend(index)}
+                                        >
+                                            -
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                            <div className="d-flex align-items-center mt-3">
+                                <input
+                                    type="text"
+                                    className="form-control me-2"
+                                    placeholder={t('settings:additional_backend_host_tip')}
+                                    value={newBackend}
+                                    onChange={(e) => this.setState({ newBackend: e.target.value })}
+                                />
+                                <div className="form-check me-2">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        id="newSecureCheckbox"
+                                        checked={newSecure}
+                                        onChange={() => this.setState({ newSecure: !newSecure })}
+                                    />
+                                    <label className="form-check-label me-7" htmlFor="newSecureCheckbox">
+                                        {t('settings:additional_backend_secure_label')}
+                                    </label>
+                                </div>
+                                <button className="btn btn-primary w-25" onClick={this.handleAddBackend}>
+                                    +
+                                </button>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
+        );
     }
     renderTranslate(): JSX.Element {
         const { t } = this.props;
@@ -394,7 +566,7 @@ class SettingsPage extends Component<
                             idPrefix={keyName}
                             schema={currentSchema}
                             formData={this.settingsFormData[keyName]}
-                            onChange={(data) => this.settingsFormData[keyName] = data.formData}
+                            onChange={(data) => (this.settingsFormData[keyName] = data.formData)}
                             onSubmit={this.onSettingsSave}
                             uiSchema={uiSchemas[keyName] as UiSchema}
                             fields={{ TitleField, DescriptionField }}
