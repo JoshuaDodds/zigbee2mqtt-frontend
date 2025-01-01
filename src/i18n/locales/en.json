@@ -2620,7 +2620,14 @@
     "translation_prompt": "You can help with the translation at",
     "zigbee_herdsman_converters_version": "zigbee-herdsman-converters version",
     "zigbee_herdsman_version": "zigbee-herdsman version",
-    "localise_images": "Localise device images"
+    "localise_images": "Localise device images",
+    "ui-options": "UI Options",
+    "additional_backend_header": "Additional Backend Configuration",
+    "additional_backend_title": "Here you can add an additional Z2M backend to allow this frontend to manage multiple Z2M instances from a single UI.",
+    "additional_backend_description": "When one or more additional backends have been added, they will show here and a new backend selector widget will appear in the top right.",
+    "additional_backend_secure_description": "(Select secure if the host uses https/wss protocol. Otherwise, leave unselected.)",
+    "additional_backend_host_tip": "Enter URL or hostname without protocol. (ie. z2m.mydomain.net, z2m.mydomain.net:8080, 192.168.1.150:8080 are all valid)",
+    "additional_backend_secure_label": "Secure?"
   },
   "touchlink": {
     "detected_devices_message": "Detected {{count}} touchlink devices.",
